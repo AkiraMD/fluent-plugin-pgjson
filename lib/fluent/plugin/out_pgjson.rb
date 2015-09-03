@@ -40,11 +40,11 @@ class PgJsonOutput < Fluent::BufferedOutput
 
   def write(chunk)
     init_connection
-    @conn.exec("COPY #{@table} (#{@tag_col}, #{@time_col}, #{@record_col}, #{@extra_cols}) FROM STDIN WITH DELIMITER E'\\x01'")
+    @conn.exec("COPY #{@table} (#{@tag_col}, #{@time_col}, #{@extra_cols}, #{@record_col}) FROM STDIN WITH DELIMITER E'\\x01'")
     begin
       chunk.msgpack_each do |tag, time, record|
-        extra = @extra_cols.split(',').collect { |col| record.get(col) }.join("\x01")          
-        @conn.put_copy_data "#{tag}\x01#{Time.at(time).to_s}\x01#{extra}#{record_value(record)}\n"
+        extra = @extra_cols.strip.split(',').collect { |col| record[col] }.join("\x01")          
+        @conn.put_copy_data "#{tag}\x01#{Time.at(time).to_s}\x01#{extra}\x01#{record_value(record)}\n"
       end
     rescue => err
       errmsg = "%s while copy data: %s" % [ err.class.name, err.message ]
