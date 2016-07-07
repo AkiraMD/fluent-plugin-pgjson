@@ -56,6 +56,10 @@ CREATE TABLE fluentd (
   time_col time
   tag_col tag
   record_col record
+  record_ext_map {
+    "user_id": "uid",
+    "message": "msg"
+  }
 </match>
 ```
 
@@ -73,6 +77,22 @@ CREATE TABLE fluentd (
 |time_col|column name to insert time|time|
 |tag_col|column name to insert tag|tag|
 |record_col|column name to insert record|record|
+|record_ext_map|map keys to columns|nil|
+
+### record_ext_map
+
+The `record_ext_map` configuration parameter lets you extract keys from the
+incoming log entry to columns in your database table. For example, the following
+would map the "user_id" value in an incoming entry to a "uid" column, and the
+"message" value to the "msg" column. Keys mapped using this parameter are
+automatically removed from the record stored in your `record_col`.
+
+```
+record_ext_map {
+  "user_id": "uid",
+  "message": "msg"
+}
+```
 
 ## Copyright
 
