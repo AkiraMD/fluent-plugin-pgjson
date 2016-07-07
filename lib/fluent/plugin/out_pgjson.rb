@@ -3,18 +3,18 @@ module Fluent
 class PgJsonOutput < Fluent::BufferedOutput
   Fluent::Plugin.register_output('pgjson', self)
 
-  config_param :host       , :string  , :default => 'localhost'
-  config_param :port       , :integer , :default => 5432
-  config_param :sslmode    , :string  , :default => 'prefer'
-  config_param :database   , :string
-  config_param :table      , :string
-  config_param :user       , :string  , :default => nil
-  config_param :password   , :string  , :default => nil , :secret => true
-  config_param :time_col   , :string  , :default => 'time'
-  config_param :tag_col    , :string  , :default => 'tag'
-  config_param :record_col , :string  , :default => 'record'
-  config_param :msgpack    , :bool    , :default => false
-  config_param :extra_cols , :string  , :default => nil
+  config_param :host,           :string,      default: 'localhost'
+  config_param :port,           :integer,     default: 5432
+  config_param :sslmode,        :string,      default: 'prefer'
+  config_param :database,       :string
+  config_param :table,          :string
+  config_param :user,           :string,      default: nil
+  config_param :password,       :string,      default: nil, secret: true
+  config_param :time_col,       :string,      default: 'time'
+  config_param :tag_col,        :string,      default: 'tag'
+  config_param :record_col,     :string,      default: 'record'
+  config_param :msgpack,        :bool,        default: false
+  config_param :extra_cols,     :string,      default: nil
 
   def initialize
     super
@@ -43,7 +43,7 @@ class PgJsonOutput < Fluent::BufferedOutput
     @conn.exec("COPY #{@table} (#{@tag_col}, #{@time_col}, #{@extra_cols}, #{@record_col}) FROM STDIN WITH DELIMITER E'\\x01'")
     begin
       chunk.msgpack_each do |tag, time, record|
-        extra = @extra_cols.strip.split(',').collect { |col| record[col] }.join("\x01")          
+        extra = @extra_cols.strip.split(',').collect { |col| record[col] }.join("\x01")
         @conn.put_copy_data "#{tag}\x01#{Time.at(time).to_s}\x01#{extra}\x01#{record_value(record)}\n"
       end
     rescue => err
