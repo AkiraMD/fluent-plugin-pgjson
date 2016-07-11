@@ -28,7 +28,7 @@ class PgJsonOutput < Fluent::BufferedOutput
       ext_cols = @record_ext_map.values.join(', ')
       @has_ext = true
       @copy_cmd =
-        "COPY #{@table} (#{@tag_col}, #{@time_col}, #{ext_cols}, #{@record_col}) FROM STDIN WITH DELIMITER E'\\x01'"
+        "COPY #{@table} (#{@tag_col}, #{@time_col}, #{ext_cols}, #{@record_col}) FROM STDIN WITH DELIMITER E'\\x01' NULL '%NULL%'"
     else
       @has_ext = false
       @copy_cmd =
@@ -55,15 +55,13 @@ class PgJsonOutput < Fluent::BufferedOutput
       chunk.msgpack_each do |tag, time, record|
         if @has_ext
           ext_cols = @record_ext_map.values
-          ext_values = []
-          ext_record = {}
-          record.each do |k,v|
+          ext_record = record.each_with_object({}) do |(k,v), out|
             unless ext_cols.include?(k)
-              ext_record[k] = v
+              out[k] = v
             end
           end
-          ext_cols.each do |k|
-            ext_values << record[k]
+          ext_values = ext_cols.map do |k|
+            record[k].nil? ? '%NULL%' : record[k]
           end
           ext = ext_values.join("\x01") + "\x01"
         else
