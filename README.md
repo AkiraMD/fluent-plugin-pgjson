@@ -84,14 +84,35 @@ CREATE TABLE fluentd (
 The `record_ext_map` configuration parameter lets you extract keys from the
 incoming log entry to columns in your database table. For example, the following
 would map the "user_id" value in an incoming entry to a "uid" column, and the
-"message" value to the "msg" column. Keys mapped using this parameter are
-automatically removed from the record stored in your `record_col`.
+"message" value to the "msg" column:
 
 ```
 record_ext_map {
   "user_id": "uid",
   "message": "msg"
 }
+```
+
+Note that keys mapped using this parameter are automatically removed from the
+record stored in your `record_col`. So given the above `record_ext_map` and an
+incoming event like the following...
+
+```
+{
+  "user_id": 123,
+  "message": "Testing",
+  "foo": "bar"
+}
+```
+
+You would end up with a row in your PostgreSQL table like this:
+
+```
++------+------+------+---------+----------------+
+| ts   | tag  | uid  | msg     | record         |
++------+------+------+---------+----------------+
+| ...  | ...  | 123  | Testing | {"foo": "bar"} |
++------+------+------+---------+----------------+
 ```
 
 ## Copyright
