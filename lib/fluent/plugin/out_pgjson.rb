@@ -22,6 +22,7 @@ class PgJsonOutput < Fluent::Output
   config_param :time_col   , :string  , :default => 'time'
   config_param :tag_col    , :string  , :default => 'tag'
   config_param :record_col , :string  , :default => 'record'
+  config_param :record_ext_map, :hash , :default => nil
   config_param :msgpack    , :bool    , :default => false
   config_param :encoder    , :enum, list: [:yajl, :json], :default => :json
   config_param :time_format, :string  , :default => '%F %T.%N %z'
@@ -86,8 +87,8 @@ class PgJsonOutput < Fluent::Output
     init_connection
     @conn.exec @copy_cmd
     begin
-<<<<<<< HEAD
-      chunk.msgpack_each do |tag, time, record|
+      tag = chunk.metadata.tag
+      chunk.msgpack_each do |time, record|
         if @has_ext
           ext_cols = @record_ext_map.values
           ext_record = record.each_with_object({}) do |(k,v), out|
@@ -102,13 +103,7 @@ class PgJsonOutput < Fluent::Output
         else
           ext = ""
         end
-
         @conn.put_copy_data "#{tag}\x01#{Time.at(time).to_s}\x01#{ext}#{record_value(ext_record)}\n"
-=======
-      tag = chunk.metadata.tag
-      chunk.msgpack_each do |time, record|
-        @conn.put_copy_data "#{tag}\x01#{time}\x01#{record_value(record)}\n"
->>>>>>> 3729dd68e1963f47abd51f89abaca0b076bdbaee
       end
     rescue => err
       errmsg = "%s while copy data: %s" % [ err.class.name, err.message ]
