@@ -1,5 +1,4 @@
 require 'fluent/plugin/output'
-require 'pg'
 require 'yajl'
 require 'json'
 
@@ -22,6 +21,7 @@ class PgJsonOutput < Fluent::Output
   config_param :time_col   , :string  , :default => 'time'
   config_param :tag_col    , :string  , :default => 'tag'
   config_param :record_col , :string  , :default => 'record'
+  config_param :extra_cols , :string  , :default => nil
   config_param :record_ext_map, :hash , :default => nil
   config_param :msgpack    , :bool    , :default => false
   config_param :encoder    , :enum, list: [:yajl, :json], :default => :json
@@ -34,6 +34,7 @@ class PgJsonOutput < Fluent::Output
 
   def initialize
     super
+    require 'pg'
     @conn = nil
   end
 
