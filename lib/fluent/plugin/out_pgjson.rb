@@ -86,6 +86,7 @@ class PgJsonOutput < Fluent::Output
 
   def write(chunk)
     init_connection
+    puts @copy_cmd
     @conn.exec @copy_cmd
     begin
       tag = chunk.metadata.tag
@@ -104,7 +105,9 @@ class PgJsonOutput < Fluent::Output
         else
           ext = ""
         end
-        @conn.put_copy_data "#{tag}\x01#{Time.at(time).to_s}\x01#{ext}#{record_value(ext_record)}\n"
+        copy_data_cmd = "#{tag}\x01#{time}\x01#{ext}#{record_value(ext_record)}\n"
+        puts copy_data_cmd
+        @conn.put_copy_data copy_data_cmd
       end
     rescue => err
       errmsg = "%s while copy data: %s" % [ err.class.name, err.message ]
