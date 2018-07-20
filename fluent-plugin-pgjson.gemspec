@@ -3,7 +3,7 @@ $:.push File.expand_path("../lib", __FILE__)
 
 Gem::Specification.new do |s|
   s.name        = "fluent-plugin-pgjson"
-  s.version     = "0.0.8"
+  s.version     = "0.0.10.pre"
   s.authors     = ["OKUNO Akihiro"]
   s.email       = ["choplin.choplin@gmail.com"]
   s.homepage    = "https://github.com/choplin/fluent-plugin-pgjson"
@@ -19,4 +19,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "fluentd"
   s.add_runtime_dependency "pg"
   s.add_development_dependency "test-unit", ">= 3.1.0"
+  s.add_development_dependency "rake", ">= 11.0"
 end
