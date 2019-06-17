@@ -1,26 +1,26 @@
-require 'pg'
-require 'securerandom'
-require 'helper'
-require 'fluent/test/driver/output'
-require 'fluent/test/helpers'
+require "pg"
+require "securerandom"
+require "helper"
+require "fluent/test/driver/output"
+require "fluent/test/helpers"
 
 class PgJsonOutputTest < Test::Unit::TestCase
   include Fluent::Test::Helpers
 
   HOST = "localhost"
   PORT = 5432
-  DATABASE = "postgres"
+  DATABASE = "pgjsontest"
   TABLE = "test_fluentd_#{SecureRandom.hex}"
-  USER = ENV["PSQL_USER"] || "postgres"
-  PASSWORD = ENV["PSQL_PASSWORD"] || "postgres"
+  USER = "fluentd"
+  PASSWORD = "fluentd"
 
   TIME_COL = "time"
   TAG_COL = "tag"
   RECORD_COL = "record"
-  ENCODER = JSON
+  ENCODER = Yajl
 
   CONFIG = %[
-    type pgjson
+    @type pgjson
     host #{HOST}
     port #{PORT}
     database #{DATABASE}
@@ -58,20 +58,20 @@ class PgJsonOutputTest < Test::Unit::TestCase
   def test_invalid_chunk_keys
     assert_raise_message(/'tag' in chunk_keys is required./) do
       create_driver(Fluent::Config::Element.new(
-                      'ROOT', '', {
-                        '@type' => 'pgjson',
-                        'host' => "#{HOST}",
-                        'port' => "#{PORT}",
-                        'database' => "#{DATABASE}",
-                        'table' => "#{TABLE}",
-                        'user' => "#{USER}",
-                        'password' => "#{PASSWORD}",
-                        'time_col' => "#{TIME_COL}",
-                        'tag_col' => "#{TAG_COL}",
-                        'record_col' => "#{RECORD_COL}",
+                      "ROOT", "", {
+                        "@type" => "pgjson",
+                        "host" => "#{HOST}",
+                        "port" => "#{PORT}",
+                        "database" => "#{DATABASE}",
+                        "table" => "#{TABLE}",
+                        "user" => "#{USER}",
+                        "password" => "#{PASSWORD}",
+                        "time_col" => "#{TIME_COL}",
+                        "tag_col" => "#{TAG_COL}",
+                        "record_col" => "#{RECORD_COL}",
                       }, [
-                        Fluent::Config::Element.new('buffer', 'mykey', {
-                                                      'chunk_keys' => 'mykey'
+                        Fluent::Config::Element.new("buffer", "mykey", {
+                                                      "chunk_keys" => "mykey"
                                                     }, [])
                       ]))
     end
@@ -79,7 +79,7 @@ class PgJsonOutputTest < Test::Unit::TestCase
 
   def test_write
     with_connection do |conn|
-      tag = 'test'
+      tag = "test"
       time = event_time("2014-12-26 07:58:37 UTC")
       record = {"a"=>1}
 
@@ -98,7 +98,7 @@ class PgJsonOutputTest < Test::Unit::TestCase
 
   def test_escape_of_backslash
     with_connection do |conn|
-      tag = 'test'
+      tag = "test"
       time = event_time("2014-12-26 07:58:37 UTC")
       record = {"a"=>"\"foo\""}
 
@@ -117,13 +117,13 @@ class PgJsonOutputTest < Test::Unit::TestCase
 
   def test_invalid_json
     with_connection do |conn|
-      tag = 'test'
+      tag = "test"
       time = event_time("2014-12-26 07:58:37 UTC")
 
       d = create_driver(CONFIG)
       instance = d.instance
       def instance.record_value(record)
-        'invalid json'
+        "invalid json"
       end
 
       assert_raise RuntimeError do
@@ -139,7 +139,7 @@ class PgJsonOutputTest < Test::Unit::TestCase
     conn = nil
 
     assert_nothing_raised do
-      conn = PG::Connection.new(:dbname => DATABASE, :host => HOST, :port => PORT, :user => USER, :password => PASSWORD)
+      conn = PG::Connection.new(dbname: DATABASE, host: HOST, port: PORT, user: USER, password: PASSWORD)
     end
 
     conn
