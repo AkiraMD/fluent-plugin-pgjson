@@ -98,13 +98,13 @@ module Fluent::Plugin
 
     def write(chunk)
       init_connection
-    puts @copy_cmd
-    @conn.exec @copy_cmd
+
+      @conn.exec @copy_cmd
       begin
         tag = chunk.metadata.tag
         chunk.msgpack_each do |time, record|
         if @has_ext
-          ext_cols = @record_ext_map.values
+          ext_cols = @record_ext_map.keys
           ext_record = record.each_with_object({}) do |(k,v), out|
             unless ext_cols.include?(k)
               out[k] = v
