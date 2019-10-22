@@ -115,6 +115,69 @@ class PgJsonOutputTest < Test::Unit::TestCase
     end
   end
 
+  def test_escape_of_newline
+    with_connection do |conn|
+      tag = "test"
+      time = event_time("2014-12-26 07:58:37 UTC")
+      val = "test\ntest"
+      record = {"a"=>val}
+
+      d = create_driver(CONFIG)
+      d.run(default_tag: tag) do
+        d.feed(time, record)
+      end
+      wait_for_data(conn)
+
+      res = conn.exec("select * from #{TABLE}")[0]
+      assert_equal tag, res[TAG_COL]
+      assert_equal time, event_time(res[TIME_COL])
+      assert_equal record.to_json, res[RECORD_COL]
+    end
+  end
+
+  def test_removal_of_problematic_unicode
+    with_connection do |conn|
+      tag = "test"
+      time = event_time("2014-12-26 07:58:37 UTC")
+      val = "test"+2.chr(Encoding::UTF_8)+"bar"+2.chr(Encoding::UTF_8)+"test"
+      record = {"a"=>val}
+
+      d = create_driver(CONFIG)
+      d.run(default_tag: tag) do
+        d.feed(time, record)
+      end
+      wait_for_data(conn)
+
+      res = conn.exec("select * from #{TABLE}")[0]
+      assert_equal tag, res[TAG_COL]
+      assert_equal time, event_time(res[TIME_COL])
+      assert_equal({"a"=>"test¿bar¿test"}.to_json, res[RECORD_COL])
+    end
+  end
+
+  def test_removal_of_problematic_unicode_with_record_ext_map
+    with_connection do |conn|
+      tag = "test"
+      time = event_time("2014-12-26 07:58:37 UTC")
+      val_a = "foo"+2.chr(Encoding::UTF_8)+"bar"+2.chr(Encoding::UTF_8)+"foo"
+      val_b = "test"+2.chr(Encoding::UTF_8)+"bar"+2.chr(Encoding::UTF_8)+"test"
+      record = {"a"=>val_a, "b"=>val_b}
+
+      conf = "#{CONFIG}\nrecord_ext_map {\"a\": \"foo\"}"
+      d = create_driver(conf)
+      d.run(default_tag: tag) do
+        d.feed(time, record)
+      end
+      wait_for_data(conn)
+
+      res = conn.exec("select * from #{TABLE}")[0]
+      assert_equal tag, res[TAG_COL]
+      assert_equal time, event_time(res[TIME_COL])
+      assert_equal("foo¿bar¿foo", res['foo'])
+      assert_equal({"b"=>"test¿bar¿test"}.to_json, res[RECORD_COL])
+    end
+  end
+
   def test_invalid_json
     with_connection do |conn|
       tag = "test"
@@ -151,6 +214,7 @@ class PgJsonOutputTest < Test::Unit::TestCase
           #{TAG_COL} Text
           ,#{TIME_COL} Timestamptz
           ,#{RECORD_COL} Json
+          ,foo Text
       );
     SQL
   end
